@@ -103,16 +103,16 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     }
 
     private void setEmptyView(String message) {
-        TextView emptyView = (TextView) findViewById(R.id.empty_view);
+        TextView emptyView = findViewById(R.id.empty_view);
         emptyView.setText(message);
-        ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        ProgressBar progressBar = findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.GONE);
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = findViewById(R.id.list);
         listView.setEmptyView(findViewById(R.id.empty_view));
     }
 
     private void setProgressBar() {
-        ListView listView = (ListView) findViewById(R.id.list);
+        ListView listView = findViewById(R.id.list);
         listView.setEmptyView(findViewById(R.id.progress_bar));
     }
 
@@ -125,17 +125,20 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         String minMagnitude = sharedPreferences.getString(
                 getString(R.string.settings_min_magnitude_key),
                 getString(R.string.settings_min_magnitude_default));
+
+        String orderBy = sharedPreferences.getString(
+                getString(R.string.settings_order_by_key),
+                getString(R.string.settings_order_by_default));
+
         Uri baseUri = Uri.parse(USGS_REQUEST_URL);
         Uri.Builder uriBuilder = baseUri.buildUpon();
 
         uriBuilder.appendQueryParameter("format", "geojson");
         uriBuilder.appendQueryParameter("limit", "10");
         uriBuilder.appendQueryParameter("minmag", minMagnitude);
-        uriBuilder.appendQueryParameter("orderby", "time");
+        uriBuilder.appendQueryParameter("orderby", orderBy);
 
-        EarthquakeLoader loader =
-                new EarthquakeLoader(EarthquakeActivity.this, uriBuilder.toString());
-        return loader;
+        return new EarthquakeLoader(this, uriBuilder.toString());
     }
 
     @Override
@@ -154,7 +157,7 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     }
 
     private void updateUi(List<Earthquake> earthquakes) {
-        ListView earthquakeListView = (ListView) findViewById(R.id.list);
+        ListView earthquakeListView = findViewById(R.id.list);
 
         final EarthquakeAdapter adapter = new EarthquakeAdapter(this, earthquakes);
 
@@ -165,7 +168,10 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 Earthquake currentEarthquake = adapter.getItem(position);
 
-                Uri earthquakeUri = Uri.parse(currentEarthquake.getUrl());
+                Uri earthquakeUri = null;
+                if (currentEarthquake != null) {
+                    earthquakeUri = Uri.parse(currentEarthquake.getUrl());
+                }
 
                 Intent websiteIntent = new Intent(Intent.ACTION_VIEW, earthquakeUri);
                 startActivity(websiteIntent);
@@ -177,7 +183,10 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
     private boolean checkConnection() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        NetworkInfo networkInfo = null;
+        if (connectivityManager != null) {
+            networkInfo = connectivityManager.getActiveNetworkInfo();
+        }
         return networkInfo != null && networkInfo.isConnected();
     }
 
@@ -203,17 +212,17 @@ public class EarthquakeActivity extends AppCompatActivity implements LoaderManag
         }
     }
 
-    private class EarthquakeAsynkTask extends AsyncTask<String, Void, List<Earthquake>> {
-
-        @Override
-        protected List<Earthquake> doInBackground(String... strings) {
-            return QueryUtils.fetchEarthquakeData(strings[0]);
-        }
-
-        @Override
-        protected void onPostExecute(List<Earthquake> earthquakes) {
-//            setEmptyView();
-            updateUi(earthquakes);
-        }
-    }
+//    private class EarthquakeAsynkTask extends AsyncTask<String, Void, List<Earthquake>> {
+//
+//        @Override
+//        protected List<Earthquake> doInBackground(String... strings) {
+//            return QueryUtils.fetchEarthquakeData(strings[0]);
+//        }
+//
+//        @Override
+//        protected void onPostExecute(List<Earthquake> earthquakes) {
+////            setEmptyView();
+//            updateUi(earthquakes);
+//        }
+//    }
 }
